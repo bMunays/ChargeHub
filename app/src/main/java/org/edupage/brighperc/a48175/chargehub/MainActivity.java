@@ -1,24 +1,44 @@
 package org.edupage.brighperc.a48175.chargehub;
 
 import android.os.Bundle;
-
-import androidx.activity.EdgeToEdge;
+import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.graphics.Insets;
-import androidx.core.view.ViewCompat;
-import androidx.core.view.WindowInsetsCompat;
+import androidx.recyclerview.widget.GridLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
+import java.util.ArrayList;
+import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
+
+    private RecyclerView recyclerViewSlots;
+    private SlotAdapter slotAdapter;
+    private List<Slot> slotList;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        EdgeToEdge.enable(this);
         setContentView(R.layout.activity_main);
-        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
-            Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
-            v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
-            return insets;
+
+        recyclerViewSlots = findViewById(R.id.recyclerViewSlots);
+
+        // Set 3 columns for the grid
+        recyclerViewSlots.setLayoutManager(new GridLayoutManager(this, 3));
+
+        // Generate 30 empty slots
+        slotList = new ArrayList<>();
+        for (int i = 1; i <= 30; i++) {
+            slotList.add(new Slot(i, false));
+        }
+
+        // Initialize adapter with click listener
+        slotAdapter = new SlotAdapter(slotList, slot -> {
+            if (slot.isOccupied()) {
+                Toast.makeText(MainActivity.this, "Slot " + slot.getSlotNumber() + " selected for Checkout", Toast.LENGTH_SHORT).show();
+            } else {
+                Toast.makeText(MainActivity.this, "Slot " + slot.getSlotNumber() + " selected for Check-in", Toast.LENGTH_SHORT).show();
+            }
         });
+
+        recyclerViewSlots.setAdapter(slotAdapter);
     }
 }
