@@ -40,6 +40,9 @@ public class MainActivity extends AppCompatActivity {
     private int selectedSlot = -1;
     private Dialog checkInDialog;
 
+    private TextView textActivePhones;
+    private TextView textDailyRevenue;
+
     // Modern way to handle Camera Results
     private final ActivityResultLauncher<Intent> takePictureLauncher =
             registerForActivityResult(new ActivityResultContracts.StartActivityForResult(), result -> {
@@ -59,11 +62,18 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        // Bind the TextViews
+        textActivePhones = findViewById(R.id.textActivePhones);
+        textDailyRevenue = findViewById(R.id.textDailyRevenue);
+
         dbHelper = new DatabaseHelper(this);
         recyclerViewSlots = findViewById(R.id.recyclerViewSlots);
         recyclerViewSlots.setLayoutManager(new GridLayoutManager(this, 3));
 
         loadGridData();
+
+        // call update on startup
+        updateStatistics();
     }
 
     private void loadGridData() {
@@ -129,6 +139,7 @@ public class MainActivity extends AppCompatActivity {
                 Toast.makeText(this, "Checkout Complete", Toast.LENGTH_SHORT).show();
                 slotList.get(slotNumber - 1).setOccupied(false);
                 slotAdapter.notifyItemChanged(slotNumber - 1);
+                updateStatistics();
                 checkOutDialog.dismiss();
             } else {
                 Toast.makeText(this, "Error during checkout", Toast.LENGTH_SHORT).show();
@@ -179,6 +190,7 @@ public class MainActivity extends AppCompatActivity {
                 // Update UI temporarily (we will link UI to DB query in the next branch)
                 slotList.get(slotNumber - 1).setOccupied(true);
                 slotAdapter.notifyItemChanged(slotNumber - 1);
+                updateStatistics();
                 checkInDialog.dismiss();
             } else {
                 Toast.makeText(this, "Database Error", Toast.LENGTH_SHORT).show();
@@ -214,5 +226,19 @@ public class MainActivity extends AppCompatActivity {
         File image = File.createTempFile(imageFileName, ".jpg", storageDir);
         currentPhotoPath = image.getAbsolutePath();
         return image;
+    }
+
+    private void updateStatistics() {
+        int activeCount = 0;
+        Cursor cursor = dbHelper.getActiveSessions();
+        if (cursor != null) {
+            activeCount = cursor.getCount(); // Count the rows currently charging
+            cursor.close();
+        }
+
+        double todayRevenue = dbHelper.getTodayRevenue();
+
+        textActivePhones.setText(String.format(Locale.US, "Active: %d/30", activeCount));
+        textDailyRevenue.setText(String.format(Locale.US, "Revenue: $%.2f", todayRevenue));
     }
 }

@@ -105,4 +105,22 @@ public class DatabaseHelper extends SQLiteOpenHelper {
                 COL_SLOT_NUMBER + "=? AND " + COL_STATUS + "='CHARGING'",
                 new String[]{String.valueOf(slot)}, null, null, null);
     }
+
+    // Gets total revenue collected today
+    public double getTodayRevenue() {
+        SQLiteDatabase db = this.getReadableDatabase();
+        // Extract just the YYYY-MM-DD part of the checkout time and match it to today
+        String query = "SELECT SUM(" + COL_FEE + ") FROM " + TABLE_SESSIONS +
+                " WHERE date(" + COL_CHECK_OUT_TIME + ") = date('now', 'localtime')";
+        Cursor cursor = db.rawQuery(query, null);
+
+        double total = 0.0;
+        if (cursor != null) {
+            if (cursor.moveToFirst()) {
+                total = cursor.getDouble(0);
+            }
+            cursor.close();
+        }
+        return total;
+    }
 }
