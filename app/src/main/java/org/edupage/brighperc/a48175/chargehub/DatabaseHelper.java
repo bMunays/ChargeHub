@@ -69,23 +69,20 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     // --- CHECK OUT ---
     public boolean checkOutPhone(int slot, double feeCalculated) {
         SQLiteDatabase db = this.getWritableDatabase();
-        ContentValues values = new ContentValues();
-        values.put(COL_STATUS, "COMPLETED");
-        values.put(COL_FEE, feeCalculated);
-        // Uses SQLite's datetime function to stamp the exact local checkout time
 
         String selection = COL_SLOT_NUMBER + "=? AND " + COL_STATUS + "=?";
         String[] selectionArgs = { String.valueOf(slot), "CHARGING" };
 
-        // We first need to execute a raw SQL to use the datetime function for check_out_time,
-        // OR we can pass it as a raw string.
-        // For simplicity and safety with ContentValues, we do an update call then a raw SQL for the timestamp:
-        int rowsAffected = db.update(TABLE_SESSIONS, values, selection, selectionArgs);
+        // FIX: Update the checkout timestamp FIRST while the status is still 'CHARGING'
+        String timeQuery = "UPDATE " + TABLE_SESSIONS + " SET " + COL_CHECK_OUT_TIME + " = datetime('now', 'localtime') WHERE " + selection;
+        db.execSQL(timeQuery, selectionArgs);
 
-        if(rowsAffected > 0) {
-            String timeQuery = "UPDATE " + TABLE_SESSIONS + " SET " + COL_CHECK_OUT_TIME + " = datetime('now', 'localtime') WHERE " + selection;
-            db.execSQL(timeQuery, selectionArgs);
-        }
+        // THEN update the status and the fee
+        ContentValues values = new ContentValues();
+        values.put(COL_STATUS, "COMPLETED");
+        values.put(COL_FEE, feeCalculated);
+
+        int rowsAffected = db.update(TABLE_SESSIONS, values, selection, selectionArgs);
 
         db.close();
         return rowsAffected > 0;
