@@ -2,6 +2,7 @@ package org.edupage.brighperc.a48175.chargehub;
 
 import android.app.Dialog;
 import android.content.Intent;
+import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
@@ -67,20 +68,74 @@ public class MainActivity extends AppCompatActivity {
 
     private void loadGridData() {
         slotList = new ArrayList<>();
-        // In a full implementation, we'd query dbHelper.getActiveSessions() here
-        // to mark active slots as occupied. For now, we generate 30 empty slots.
         for (int i = 1; i <= 30; i++) {
             slotList.add(new Slot(i, false));
         }
 
+        // Check SQLite for active sessions to turn slots green
+        Cursor cursor = dbHelper.getActiveSessions();
+        if (cursor != null && cursor.moveToFirst()) {
+            do {
+                int slotNum = cursor.getInt(cursor.getColumnIndexOrThrow("slot_number"));
+                slotList.get(slotNum - 1).setOccupied(true);
+            } while (cursor.moveToNext());
+            cursor.close();
+        }
+
         slotAdapter = new SlotAdapter(slotList, slot -> {
             if (slot.isOccupied()) {
-                Toast.makeText(this, "Checkout flow coming next!", Toast.LENGTH_SHORT).show();
+                showCheckOutDialog(slot.getSlotNumber());
             } else {
                 showCheckInDialog(slot.getSlotNumber());
             }
         });
         recyclerViewSlots.setAdapter(slotAdapter);
+    }
+
+    private void showCheckOutDialog(int slotNumber) {
+        Dialog checkOutDialog = new Dialog(this);
+        checkOutDialog.setContentView(R.layout.dialog_check_out);
+        checkOutDialog.getWindow().setLayout(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+
+        TextView textTitle = checkOutDialog.findViewById(R.id.textCheckoutTitle);
+        TextView textTime = checkOutDialog.findViewById(R.id.textCheckInTime);
+        TextView textFee = checkOutDialog.findViewById(R.id.textFeeCalculated);
+        ImageView imagePhoto = checkOutDialog.findViewById(R.id.imageConditionCheckout);
+        Button btnConfirm = checkOutDialog.findViewById(R.id.btnConfirmCheckout);
+
+        textTitle.setText("Check-Out: Slot " + slotNumber);
+
+        // Fetch data from database
+        Cursor cursor = dbHelper.getActiveSessionForSlot(slotNumber);
+        double calculatedFee = 1.00; // Flat base fee for testing (can make dynamic later)
+
+        if (cursor != null && cursor.moveToFirst()) {
+            String checkInStr = cursor.getString(cursor.getColumnIndexOrThrow("check_in_time"));
+            String photoUriStr = cursor.getString(cursor.getColumnIndexOrThrow("photo_uri"));
+            String phoneNum = cursor.getString(cursor.getColumnIndexOrThrow("primary_phone"));
+
+            textTime.setText("Phone: " + phoneNum + "\nIn: " + checkInStr);
+            textFee.setText(String.format(Locale.US, "Amount Due: $%.2f", calculatedFee));
+
+            if (photoUriStr != null) {
+                imagePhoto.setImageURI(Uri.parse(photoUriStr));
+            }
+            cursor.close();
+        }
+
+        btnConfirm.setOnClickListener(v -> {
+            boolean success = dbHelper.checkOutPhone(slotNumber, calculatedFee);
+            if (success) {
+                Toast.makeText(this, "Checkout Complete", Toast.LENGTH_SHORT).show();
+                slotList.get(slotNumber - 1).setOccupied(false);
+                slotAdapter.notifyItemChanged(slotNumber - 1);
+                checkOutDialog.dismiss();
+            } else {
+                Toast.makeText(this, "Error during checkout", Toast.LENGTH_SHORT).show();
+            }
+        });
+
+        checkOutDialog.show();
     }
 
     private void showCheckInDialog(int slotNumber) {

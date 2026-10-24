@@ -97,4 +97,12 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         SQLiteDatabase db = this.getReadableDatabase();
         return db.query(TABLE_SESSIONS, null, COL_STATUS + "='CHARGING'", null, null, null, COL_SLOT_NUMBER + " ASC");
     }
+
+    // Gets the details of the active session for a specific slot
+    public Cursor getActiveSessionForSlot(int slot) {
+        SQLiteDatabase db = this.getReadableDatabase();
+        return db.query(TABLE_SESSIONS, null,
+                COL_SLOT_NUMBER + "=? AND " + COL_STATUS + "='CHARGING'",
+                new String[]{String.valueOf(slot)}, null, null, null);
+    }
 }
