@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="24dp">
+
+    <TextView
+        android:id="@+id/textDialogTitle"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:textSize="20sp"
+        android:textStyle="bold"
+        android:layout_marginBottom="16dp"/>
+
+    <EditText
+        android:id="@+id/editPrimaryPhone"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="Primary Phone (Required)"
+        android:inputType="phone"
+        android:layout_marginBottom="8dp"/>
+
+    <EditText
+        android:id="@+id/editAltPhone"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="Alt Phone (Optional)"
+        android:inputType="phone"
+        android:layout_marginBottom="8dp"/>
+
+    <EditText
+        android:id="@+id/editNationalId"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="National ID (Optional)"
+        android:inputType="text"
+        android:layout_marginBottom="16dp"/>
+
+    <Button
+        android:id="@+id/btnTakePhoto"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="1. Take Condition Photo"
+        android:backgroundTint="#FF9800"/>
+
+    <ImageView
+        android:id="@+id/imagePreview"
+        android:layout_width="match_parent"
+        android:layout_height="120dp"
+        android:layout_marginTop="8dp"
+        android:layout_marginBottom="16dp"
+        android:scaleType="centerCrop"
+        android:visibility="gone"/>
+
+    <Button
+        android:id="@+id/btnStartCharge"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="2. Start Charging"
+        android:enabled="false"
+        android:backgroundTint="#4CAF50"/>
+</LinearLayout>
